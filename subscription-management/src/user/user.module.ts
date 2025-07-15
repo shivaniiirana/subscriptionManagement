@@ -11,6 +11,6 @@ import { StripeService } from 'src/stripe/stripe.service';
   ],
   providers: [UserService, StripeService],
   controllers: [UserController],
-  exports: [UserService], 
+  exports: [UserService],
 })
 export class UserModule {}

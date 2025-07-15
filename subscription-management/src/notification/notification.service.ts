@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SendEmailOptions } from './interfaces/notification.interface';
 
-
 @Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);

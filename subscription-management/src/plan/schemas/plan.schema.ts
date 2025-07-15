@@ -14,7 +14,7 @@ export class Plan {
   @Prop() currency: string;
   @Prop() trialPeriodDays: number;
   @Prop({ default: true }) active: boolean;
-  @Prop() type: string; 
+  @Prop() type: string;
 }
 
 export const PlanSchema = SchemaFactory.createForClass(Plan);

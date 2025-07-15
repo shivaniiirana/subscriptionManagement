@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Get,
-} from '@nestjs/common';
+import { Controller, Post, Body, Patch, Param, Get } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import {
   ApiTags,
@@ -42,14 +35,13 @@ export class SubscriptionController {
     body: {
       paymentMethodId: string;
       customerId: string;
-        priceId: string;
+      priceId: string;
     },
   ) {
     return this.subService.createSubscription(
       body.customerId,
       body.priceId,
       body.paymentMethodId,
-     
     );
   }
 

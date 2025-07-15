@@ -8,7 +8,7 @@ import { HttpExceptionFilter } from './common/httpExceptionFilter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-   app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.use(
     '/webhook/stripe',
@@ -19,20 +19,20 @@ async function bootstrap() {
     },
   );
 
-  app.use(cors()); 
+  app.use(cors());
 
- 
   app.use(json());
   app.use(urlencoded({ extended: true }));
 
-
-   const swaggerConfig = new DocumentBuilder()
-     .setTitle('Subscription Management API')
-     .setDescription('API documentation for the subscription management application')
-     .setVersion('1.0')
-     .build();
-   const document = SwaggerModule.createDocument(app, swaggerConfig);
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Subscription Management API')
+    .setDescription(
+      'API documentation for the subscription management application',
+    )
+    .setVersion('1.0')
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
-    await app.listen(process.env.PORT ?? 3001);
+  await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

@@ -8,7 +8,14 @@ import { StripeModule } from 'src/stripe/stripe.module';
 import { PlanModule } from 'src/plan/plan.module';
 
 @Module({
-  imports:[MongooseModule.forFeature([{name:StripeEvent.name, schema:StripeEventSchema}]), SubscriptionModule, StripeModule, PlanModule],
+  imports: [
+    MongooseModule.forFeature([
+      { name: StripeEvent.name, schema: StripeEventSchema },
+    ]),
+    SubscriptionModule,
+    StripeModule,
+    PlanModule,
+  ],
   controllers: [WebhookController],
   providers: [WebhookService],
 })

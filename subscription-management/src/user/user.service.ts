@@ -6,21 +6,17 @@ import { CreateUserDto } from './dtos/createUser.dto';
 import { UpdateUserDto } from './dtos/updateUser.dto';
 import { StripeService } from 'src/stripe/stripe.service';
 
-
 @Injectable()
 export class UserService {
-
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     private readonly stripeService: StripeService,
   ) {}
 
   async create(createDto: CreateUserDto) {
-    
     const stripeCustomer = await this.stripeService.client.customers.create({
       email: createDto.email,
       name: createDto.name,
-     
     });
 
     const user = new this.userModel({

@@ -18,7 +18,7 @@ export class StripeService {
     this.stripe = new Stripe(stripeSecretKey, {
       // @ts-expect-error
       apiVersion: '2023-10-16',
-    } as const); 
+    } as const);
   }
 
   get client(): Stripe {

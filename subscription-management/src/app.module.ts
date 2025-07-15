@@ -10,7 +10,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { NotificationModule } from './notification/notification.module';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),

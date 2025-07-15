@@ -18,7 +18,7 @@ import { NotificationModule } from 'src/notification/notification.module';
       { name: Refund.name, schema: RefundSchema },
       { name: User.name, schema: UserSchema },
     ]),
-    forwardRef(() => NotificationModule), 
+    forwardRef(() => NotificationModule),
   ],
   controllers: [SubscriptionController],
   providers: [SubscriptionService, StripeService],

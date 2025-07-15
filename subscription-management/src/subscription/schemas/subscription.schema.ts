@@ -5,7 +5,6 @@ export type SubscriptionDocument = Subscription & Document;
 
 @Schema({ timestamps: true })
 export class Subscription {
-
   email: string;
 
   name: string;
@@ -25,12 +24,11 @@ export class Subscription {
   @Prop({ default: false })
   cancelAtPeriodEnd: boolean;
 
- 
   @Prop({ type: String, default: null })
-  scheduledDowngradePriceId: string | null; 
+  scheduledDowngradePriceId: string | null;
 
   @Prop({ type: String, default: null })
-  stripeScheduleId: string | null; 
+  stripeScheduleId: string | null;
 
   @Prop({ type: Date, default: null })
   scheduledDowngradeDate: Date | null;

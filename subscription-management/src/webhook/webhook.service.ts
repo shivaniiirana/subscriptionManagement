@@ -25,7 +25,7 @@ export class WebhookService {
     private readonly planModel: Model<PlanDocument>,
     private readonly configService: ConfigService,
     private readonly stripeService: StripeService,
-    private readonly subService:SubscriptionService,
+    private readonly subService: SubscriptionService,
   ) {}
 
   async handleEvent(rawBody: Buffer, sig: string | string[]) {
@@ -158,7 +158,7 @@ export class WebhookService {
           break;
         }
 
-        // SUBSCRIPTION EVENTS 
+        // SUBSCRIPTION EVENTS
         case 'customer.subscription.created':
         case 'customer.subscription.updated':
         case 'customer.subscription.deleted': {
@@ -223,9 +223,7 @@ export class WebhookService {
           }
 
           await this.subService.syncSubscriptionByStripeId(stripeSubId);
-          this.logger.log(
-            `Invoice paid. Synced subscription: ${stripeSubId}`,
-          );
+          this.logger.log(`Invoice paid. Synced subscription: ${stripeSubId}`);
           break;
         }
 

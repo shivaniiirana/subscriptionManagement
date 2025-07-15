@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Plan, PlanDocument } from './schemas/plan.schema';
-import { StripeService } from '../stripe/stripe.service'; 
+import { StripeService } from '../stripe/stripe.service';
 import Stripe from 'stripe';
 
 @Injectable()
@@ -11,9 +11,9 @@ export class PlanService {
 
   constructor(
     @InjectModel(Plan.name) private readonly planModel: Model<PlanDocument>,
-    private readonly stripeService: StripeService, 
+    private readonly stripeService: StripeService,
   ) {
-    this.stripe = this.stripeService.client; 
+    this.stripe = this.stripeService.client;
   }
 
   async syncPlansFromStripe(): Promise<void> {
@@ -41,7 +41,7 @@ export class PlanService {
     return this.planModel.find();
   }
 
-  async getPlanByIdService(id: string) { 
+  async getPlanByIdService(id: string) {
     return this.planModel.findById(id);
   }
 }

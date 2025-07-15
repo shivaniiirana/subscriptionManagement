@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -8,10 +14,12 @@ import {
 import { StripeService } from '../stripe/stripe.service';
 import Stripe from 'stripe';
 import { Refund, RefundDocument } from './schemas/refund.schema';
-import { sendSubscriptionEmail, SubscriptionEventType } from 'src/notification/helper/email.helper';
+import {
+  sendSubscriptionEmail,
+  SubscriptionEventType,
+} from 'src/notification/helper/email.helper';
 import { NotificationService } from 'src/notification/notification.service';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
-
 
 @Injectable()
 export class SubscriptionService {
@@ -35,11 +43,10 @@ export class SubscriptionService {
     customerId: string,
     priceId: string,
     paymentMethodId: string,
-
   ): Promise<any> {
     const stripe = this.stripeService.client;
     // Log the incoming subscription creation request
-    
+
     const user = await this.userModel.findOne({ stripeCustomerId: customerId });
     console.log(user);
     const email1 = user?.email;
@@ -152,7 +159,7 @@ export class SubscriptionService {
     this.logger.log('Saving subscription to database');
     const subscription = await this.subscriptionModel.findOneAndUpdate(
       { stripeSubscriptionId: stripeSub.id },
-      { 
+      {
         customerId: stripeSub.customer as string,
         stripeSubscriptionId: stripeSub.id,
         stripePriceId: item?.price.id,
@@ -165,8 +172,7 @@ export class SubscriptionService {
           : null,
         endedAt: null,
         cancellationDate: null,
-        metadata: {
-        },
+        metadata: {},
       },
       { new: true, upsert: true },
     );
@@ -175,16 +181,16 @@ export class SubscriptionService {
 
     // Send a confirmation email to the user
     this.logger.log(`Sending confirmation email to ${email1}`);
-   if (!email1) {
-     this.logger.warn('User email not found, skipping notification');
-     return;
-   }
+    if (!email1) {
+      this.logger.warn('User email not found, skipping notification');
+      return;
+    }
 
-   await sendSubscriptionEmail(
-     this.notificationService,
-     { name: name1, email: email1 },
-     SubscriptionEventType.CREATED,
-   );
+    await sendSubscriptionEmail(
+      this.notificationService,
+      { name: name1, email: email1 },
+      SubscriptionEventType.CREATED,
+    );
     this.logger.log(`Confirmation email sent to ${email1}`);
 
     // Return the subscription creation result
@@ -297,15 +303,15 @@ export class SubscriptionService {
     const currentPeriodEnd = stripeSub.current_period_end
       ? new Date(stripeSub.current_period_end * 1000)
       : null;
-    
-     if (email) {
-       this.logger.log(`Sending upgrade email to ${email}`);
-       await sendSubscriptionEmail(
-         this.notificationService,
-         { name, email },
-         SubscriptionEventType.UPGRADED,
-       );
-     }
+
+    if (email) {
+      this.logger.log(`Sending upgrade email to ${email}`);
+      await sendSubscriptionEmail(
+        this.notificationService,
+        { name, email },
+        SubscriptionEventType.UPGRADED,
+      );
+    }
 
     // Update the subscription in the database
     return await this.subscriptionModel.findByIdAndUpdate(
@@ -329,10 +335,10 @@ export class SubscriptionService {
   async scheduleDowngrade(id: string, newPriceId: string) {
     const sub = await this.subscriptionModel.findById(id);
     if (!sub) throw new NotFoundException('Subscription not found');
-      const userId = sub.customerId;
-      const user = await this.userModel.findOne({ stripeCustomerId: userId });
-      const email = user?.email;
-      const name = user?.name;
+    const userId = sub.customerId;
+    const user = await this.userModel.findOne({ stripeCustomerId: userId });
+    const email = user?.email;
+    const name = user?.name;
 
     const stripe = this.stripeService.client;
     let scheduleId = sub.stripeScheduleId;
@@ -578,13 +584,13 @@ export class SubscriptionService {
       refundReason: 'Subscription cancelled',
       refundedAt: new Date(),
     });
-      if (email) {
-        this.logger.log(`Sending cancellation email to ${email}`);
-        await sendSubscriptionEmail(
-          this.notificationService,
-          { name, email },
-          SubscriptionEventType.CANCELLED,
-        );
-      }
+    if (email) {
+      this.logger.log(`Sending cancellation email to ${email}`);
+      await sendSubscriptionEmail(
+        this.notificationService,
+        { name, email },
+        SubscriptionEventType.CANCELLED,
+      );
+    }
   }
 }

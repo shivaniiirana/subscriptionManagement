@@ -12,5 +12,4 @@ export class UpdateUserDto {
     description: 'Updated name of the user',
   })
   name?: string;
-
 }
