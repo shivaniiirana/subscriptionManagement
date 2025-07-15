@@ -1,135 +1,69 @@
-🧾 Stripe Subscription Management API – NestJS
-A full-featured NestJS backend for managing Stripe subscriptions, including:
+# 🚀 NestJS Stripe Subscription API
 
-💳 Creating subscriptions with payment methods
+This is a **NestJS-based backend API** that manages user accounts, Stripe subscriptions, and handles Stripe webhook events.
 
-📤 Webhooks syncing
+---
 
-📈 Upgrading/downgrading subscriptions
+## 📦 Features
 
-❌ Canceling subscriptions with refund logic
+- 🧑‍💼 User Management (Create, Read, Update, Delete)
+- 💳 Stripe Subscription Management (Create, Cancel, Upgrade, Downgrade)
+- 🔔 Webhook Event Listener for Stripe (Product, Price, Subscription, Invoice events)
+- 📘 Swagger Documentation for API
 
-📬 Email notifications (Nodemailer)
+✅ Tech Stack
+NestJS
 
-📦 Features
-Stripe payment and subscription integration
+MongoDB (Mongoose)
 
-Mongoose schemas for Subscription, Plan, Refund, StripeEvent
-
-Nodemailer for transactional emails (create, cancel, upgrade, downgrade)
-
-Webhook-based syncing from Stripe
-
-Auto refund on cancellation (full/prorated)
-
-Logs and error tracking with NestJS Logger
-
-⚙️ Tech Stack
-NestJS – Modular backend framework
-
-Stripe API – Payment and subscription management
-
-MongoDB + Mongoose – Data storage
-
-Nodemailer – Email service
-
-Logger – Structured request logging
-
-dotenv/config – Environment configuration
+Stripe SDK
 
 
-🧪 Environment Setup
-Create a .env file at the project root:
+🔌 API Endpoints
+👤 User Routes
+Method	Route	Description
+POST	/users	Create new user
+GET	/users	Get all users
+GET	/users/:id	Get user by ID
+PATCH	/users/:id	Update user by ID
+DELETE	/users/:id	Delete user by ID
 
-env
-Copy
-Edit
-# Stripe
-STRIPE_SECRET_KEY=sk_test_***************
-STRIPE_WEBHOOK_SECRET=whsec_*************
+📦 Subscription Routes
+Method	Route	Description
+POST	/subscriptions	Create a new subscription
+GET	/subscriptions	Get all subscriptions
+GET	/subscriptions/:id	Get subscription by ID
+PATCH	/subscriptions/cancel/:id	Cancel a subscription
+PATCH	/subscriptions/upgrade/:id	Upgrade subscription (price ID)
+PATCH	/subscriptions/downgrade/:id	Downgrade (schedule change)
 
-# Email (Gmail recommended)
-EMAIL_USER=yourgmail@gmail.com
-EMAIL_PASS=yourgmailapppassword
-
-# MongoDB
-MONGODB_URI=mongodb://localhost:27017/subscription_db
-
-
-📘 API Usage
-🔐 Create Subscription
-http
-Copy
-Edit
-POST /subscriptions
-Body:
-
+🧾 Subscription Creation Payload:
 json
 Copy
 Edit
 {
-  "customerId": "cus_123...",
-  "priceId": "price_abc...",
-  "paymentMethodId": "pm_123..."
+  "customerId": "cus_xxx",
+  "priceId": "price_xxx",
+  "paymentMethodId": "pm_xxx"
 }
-📈 Upgrade Subscription
-h
-Copy
-Edit
-PATCH /subscriptions/:id/upgrade
-Body:
+🔔 Stripe Webhook
+Method	Route	Description
+POST	/webhook/stripe	Stripe webhook handler
 
-json
-Copy
-Edit
-{
-  "newPriceId": "price_xyz..."
-}
-📉 Schedule Downgrade
-http
-Copy
-Edit
-PATCH /subscriptions/:id/downgrade
-Body:
+Automatically handles events like invoice.paid, subscription.updated, product.created, etc.
 
-json
-Copy
-Edit
-{
-  "newPriceId": "price_basic..."
-}
-❌ Cancel Subscription
-http
-Copy
-Edit
-DELETE /subscriptions/:id
-📬 Emails Sent
-Emails are sent to the user when:
+🧠 Handled Webhook Events
+product.created, product.updated, product.deleted
 
-✅ Subscription is created
+price.created, price.updated, price.deleted
 
-⬆️ Subscription is upgraded
+customer.subscription.created, customer.subscription.updated, customer.subscription.deleted
 
-⬇️ Subscription is scheduled to downgrade
-
-❌ Subscription is cancelled
-
-Configured with Gmail using Nodemailer.
-
-🧾 Webhook Events Handled
-
-product.created/updated/deleted
-
-price.created/updated/deleted
-
-customer.subscription.created/updated/deleted
-
-invoice.*
+invoice.payment_succeeded, invoice.payment_failed, invoice.updated, etc.
 
 checkout.session.completed
 
-subscription_schedule.canceled
+refund.created, refund.updated
 
 charge.refunded
 
-refund.created/updated
