@@ -43,7 +43,7 @@ export class SubscriptionService {
     customerId: string,
     priceId: string,
     paymentMethodId: string,
-  ): Promise<any> {
+  ) {
     const stripe = this.stripeService.client;
     // Log the incoming subscription creation request
 
@@ -460,19 +460,23 @@ export class SubscriptionService {
   }
 
   /**
-   * Cancels a subscription immediately. If cancelled within 3 days of start, issues a full refund; otherwise, issues a prorated refund.
+   * Cancels a subscription immediately using prorated.
    */
+
   async cancelSubscription(subscriptionId: string) {
     this.logger.log(`Cancelling subscription: ${subscriptionId}`);
-    // Find subscription in database
+
     let sub: SubscriptionDocument | null =
       await this.subscriptionModel.findById(subscriptionId);
+
     if (!sub) {
       sub = await this.subscriptionModel.findOne({
         stripeSubscriptionId: subscriptionId,
       });
     }
+
     if (!sub) throw new NotFoundException('Subscription not found');
+
     const userId = sub.customerId;
     const user = await this.userModel.findOne({ stripeCustomerId: userId });
     const email = user?.email;
@@ -480,79 +484,40 @@ export class SubscriptionService {
 
     const stripe = this.stripeService.client;
 
-    // Retrieve subscription with expanded invoice and payment intent
+    // Retrieve subscription with invoice and payment intent
     const stripeSub = await stripe.subscriptions.retrieve(
       sub.stripeSubscriptionId,
-      {
-        expand: ['latest_invoice.payment_intent'],
-      },
+      { expand: ['latest_invoice.payment_intent'] },
     );
 
-    // Calculate proration
-    const startUnix = stripeSub.current_period_start;
-    const endUnix = stripeSub.current_period_end;
-    const nowUnix = Math.floor(Date.now() / 1000);
-    const daysTotal = Math.ceil((endUnix - startUnix) / 86400);
-    const daysUsed = Math.ceil((nowUnix - startUnix) / 86400);
-    const daysUnused = daysTotal - daysUsed;
+    // Cancel with proration and generate invoice now
+    this.logger.log('Cancelling subscription in Stripe with proration');
+    await stripe.subscriptions.cancel(sub.stripeSubscriptionId, {
+      prorate: true,
+      invoice_now: true,
+    });
 
-    // Cancel the subscription in Stripe
-    this.logger.log('Cancelling subscription in Stripe');
-    await stripe.subscriptions.cancel(sub.stripeSubscriptionId);
-
-    // Handle refund logic
-    let refundResult: Stripe.Refund | null = null;
+    // Refund logic (optional: auto-refund the last charge)
     const latestInvoice = stripeSub.latest_invoice as Stripe.Invoice;
-
     if (latestInvoice && typeof latestInvoice === 'object') {
-      try {
-        // Retrieve full invoice with expanded payment intent
-        this.logger.log('Retrieving invoice for refund calculation');
-        const invoice = await stripe.invoices.retrieve(latestInvoice.id, {
-          expand: ['payment_intent'],
+      const paymentIntent =
+        typeof latestInvoice.payment_intent === 'string'
+          ? await stripe.paymentIntents.retrieve(latestInvoice.payment_intent)
+          : latestInvoice.payment_intent;
+
+      if (paymentIntent?.latest_charge) {
+        const chargeId = paymentIntent.latest_charge as string;
+
+        // Full or partial refund — here assuming full refund of last invoice
+        this.logger.log(`Creating refund for charge: ${chargeId}`);
+        await stripe.refunds.create({
+          charge: chargeId,
+          reason: 'requested_by_customer',
         });
-
-        // Get payment intent (either expanded or retrieved separately)
-        const paymentIntent =
-          typeof invoice.payment_intent === 'string'
-            ? await stripe.paymentIntents.retrieve(invoice.payment_intent)
-            : invoice.payment_intent;
-
-        if (paymentIntent && paymentIntent.latest_charge) {
-          const chargeId = paymentIntent.latest_charge as string;
-          const amountPaid = invoice.amount_paid;
-
-          // Determine refund amount (full if within 3 days, otherwise prorated)
-          let refundAmount: number | undefined;
-          if (daysUsed <= 3) {
-            this.logger.log('Issuing full refund');
-            refundAmount = amountPaid;
-          } else {
-            // Calculate prorated amount
-            const unusedPercentage = daysUnused / daysTotal;
-            refundAmount = Math.floor(amountPaid * unusedPercentage);
-            this.logger.log(`Issuing prorated refund: ${refundAmount}`);
-          }
-
-          // Create refund in Stripe
-          if (refundAmount > 0) {
-            this.logger.log('Creating refund in Stripe');
-            refundResult = await stripe.refunds.create({
-              charge: chargeId,
-              amount: refundAmount,
-              reason: 'requested_by_customer',
-            });
-            this.logger.log('Refund successful');
-          }
-        }
-      } catch (error) {
-        this.logger.error('Error processing refund:', error);
-        // Continue with cancellation even if refund fails
       }
     }
 
     // Update subscription status in the database
-    this.logger.log('Updating subscription status in database');
     const updatedSubscription = await this.subscriptionModel.findByIdAndUpdate(
       sub._id,
       {
@@ -569,23 +534,20 @@ export class SubscriptionService {
     );
 
     if (!updatedSubscription) {
-      this.logger.error('Failed to update subscription in database');
       throw new InternalServerErrorException('Failed to update subscription');
     }
 
-    // Record the refund in the refund collection
-    this.logger.log('Recording refund in database');
-    const invoice = stripeSub.latest_invoice as Stripe.Invoice;
-
+    // Record refund
     await this.refundModel.create({
       customerId: updatedSubscription.customerId,
       subscriptionId: updatedSubscription._id,
-      refundAmount: invoice?.amount_paid ?? 0,
-      refundReason: 'Subscription cancelled',
+      refundAmount: latestInvoice?.amount_paid ?? 0,
+      refundReason: 'Subscription cancelled with manual refund',
       refundedAt: new Date(),
     });
+
+    // Send cancellation email
     if (email) {
-      this.logger.log(`Sending cancellation email to ${email}`);
       await sendSubscriptionEmail(
         this.notificationService,
         { name, email },
